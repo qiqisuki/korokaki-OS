@@ -10,6 +10,11 @@ import logging
 import os
 import sys
 
+# GPT-SoVITS 源码路径
+_GPT_SOVITS_HOME = os.environ.get("GPT_SOVITS_HOME", os.path.expanduser("~/GPT-SoVITS"))
+if os.path.isdir(_GPT_SOVITS_HOME) and _GPT_SOVITS_HOME not in sys.path:
+    sys.path.insert(0, _GPT_SOVITS_HOME)
+
 from flask import Flask, request, Response, jsonify
 
 logging.basicConfig(level=logging.INFO, format="[tts] %(levelname)s %(message)s")

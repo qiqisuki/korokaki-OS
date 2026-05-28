@@ -27,7 +27,8 @@ TTSSpeaker.prototype.speak = function (text) {
   // 打断当前播放
   this.stop()
 
-  var url = 'http://127.0.0.1:9880/tts?text=' + encodeURIComponent(clean) + '&speed=' + this._speed
+  // GPT-SoVITS API: GET /?text=...&text_language=zh
+  var url = 'http://127.0.0.1:9880/?text=' + encodeURIComponent(clean) + '&text_language=zh'
 
   fetch(url)
     .then(function (res) {

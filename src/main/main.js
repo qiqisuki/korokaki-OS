@@ -172,11 +172,15 @@ function startApiServer() {
 
 function startTtsServer() {
   var pythonPath = 'python'
-  var scriptPath = join(ROOT, 'tts_server', 'tts_server.py')
   var fs = require('fs')
 
+  // 使用 GPT-SoVITS 自带的 api.py
+  var gptSovitsHome = process.env.GPT_SOVITS_HOME || join(os.homedir(), 'GPT-SoVITS')
+  var scriptPath = join(gptSovitsHome, 'api.py')
+
   if (!fs.existsSync(scriptPath)) {
-    console.warn('[tts] TTS 服务器脚本不存在:', scriptPath)
+    console.warn('[tts] GPT-SoVITS api.py 不存在:', scriptPath)
+    console.warn('[tts] 请克隆: git clone https://github.com/RVC-Boss/GPT-SoVITS.git ~/GPT-SoVITS')
     return
   }
 
@@ -189,15 +193,23 @@ function startTtsServer() {
   } catch (e) {}
 
   var modelPath = settings.ttsModelPath || join(ROOT, 'assets', 'tts', 'model.pth')
+  var refAudio = settings.ttsRefAudio || join(ROOT, 'assets', 'tts', 'ref.wav')
 
-  var args = [scriptPath, '--model_path', modelPath, '--port', '9880']
-  if (settings.ttsRefAudio) {
-    args.push('--ref_audio', settings.ttsRefAudio)
+  var args = [
+    scriptPath,
+    '-s', modelPath,
+    '-d', 'cpu',
+    '-p', '9880',
+    '-a', '127.0.0.1',
+  ]
+  if (fs.existsSync(refAudio)) {
+    args.push('-dr', refAudio, '-dt', '你好，我是会长姐姐。', '-dl', 'zh')
   }
 
   try {
     ttsServer = require('child_process').spawn(pythonPath, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: gptSovitsHome,
     })
     ttsServer.stdout.on('data', function (d) {
       process.stdout.write('[tts] ' + d.toString())
@@ -207,7 +219,7 @@ function startTtsServer() {
     })
     ttsServer.on('error', function () { ttsServer = null })
     ttsServer.on('exit', function () { ttsServer = null })
-    console.log('[tts] TTS 服务器启动中...')
+    console.log('[tts] TTS 服务器启动中 (GPT-SoVITS)...')
   } catch (e) {
     console.warn('[tts] 无法启动 TTS 服务器:', e.message)
   }
