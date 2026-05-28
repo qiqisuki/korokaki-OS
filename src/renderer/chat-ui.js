@@ -1,6 +1,7 @@
 const { chat } = require('../bridge/claude-api')
 const { bubbleDuration } = require('../shared/config')
 const sound = require('./sound')
+const { TTSSpeaker } = require('./tts')
 
 function ChatUI(model, expressionState, behavior) {
   this._model = model
@@ -11,6 +12,7 @@ function ChatUI(model, expressionState, behavior) {
   this._field = null
   this._btn = null
   this._bubbleTimer = null
+  this._tts = new TTSSpeaker()
   this._init()
 }
 
@@ -85,6 +87,7 @@ ChatUI.prototype._send = async function () {
     if (result.expr && this._expressionState) {
       await this._expressionState.set(result.expr)
     }
+    this._tts.speak(result.text)
   } catch (e) {
     this.showBubble('嗯...信号不太好呢，等会再说 [idle]', 3000)
   }

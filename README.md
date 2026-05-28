@@ -1,6 +1,6 @@
 # 桌面浮窗小助手
 
-> 会长姐姐的数字分身 — Electron 透明浮窗 + Live2D 模型 + Claude API + 网易云音乐
+> 会长姐姐的数字分身 — Electron 透明浮窗 + Live2D 模型 + AI 聊天 + 网易云音乐 + TTS 语音合成
 >
 > 小夜 & 会长姐姐 的共同项目 | Started 2026-05-28
 
@@ -34,6 +34,7 @@ desktop-mascot/
 │   └── under.jpg          # 浮窗背景图
 ├── chat-bridge/           # 对话桥接 README
 ├── music-player/          # 网易云音乐模块（Phase 4）
+├── tts_server/            # GPT-SoVITS TTS 语音服务（Phase 5）
 ├── reminder/              # 提醒系统（Phase 3）
 └── wechat-link/           # 微信联动（Phase 5）
 ```
@@ -59,6 +60,27 @@ npm install
 npm start
 ```
 
+### TTS 语音合成（可选）
+
+```bash
+# 1. 安装 Python 依赖
+pip install torch flask numpy soundfile
+
+# 2. 安装 GPT-SoVITS
+git clone https://github.com/RVC-Boss/GPT-SoVITS.git
+cd GPT-SoVITS && pip install -r requirements.txt
+
+# 3. 将模型放入 assets/tts/
+#    - model.pth  (SoVITS 权重)
+#    - ref.wav     (参考音频，声音克隆用)
+
+# 4. 测试 TTS 服务器
+cd tts_server && pip install -r requirements.txt
+python tts_server.py --model_path ../assets/tts/model.pth --port 9880
+
+# 5. 启动应用 → 设置中开启 TTS → AI 回复说话
+```
+
 ---
 
 ## 模块详情
@@ -69,7 +91,8 @@ npm start
 | 对话桥接 | `src/bridge/` | 🟢 Phase 2 完成 | DeepSeek API 接入 + 气泡 UI + 自动表情 |
 | 空闲行为 | `src/renderer/behavior.js` | 🟢 Phase 3 完成 | 随机动作 + 自言自语 + 时间问候 |
 | 提醒系统 | `src/renderer/reminders.js` | 🟢 Phase 3 完成 | 喝水提醒 + 休息提醒 + deadline 催稿 |
-| 音乐播放 | `src/music/` | 🟢 Phase 4 进行中 | 网易云 API + howler.js + 搜索面板 + 播放 |
+| 音乐播放 | `src/music/` | 🟢 Phase 4 完成 | 网易云 API + howler.js + 搜索面板 + 播放 |
+| 语音合成 | `tts_server/` `src/renderer/tts.js` | 🟢 Phase 5 进行中 | GPT-SoVITS + Flask + Howler 播放 |
 | 微信联动 | `wechat-link/` | 🔜 待开发 | 复用 wechat-mcp 桥接 |
 
 ---
@@ -80,8 +103,9 @@ npm start
 - [x] **Phase 1：能看** — 透明窗口 + 模型加载 + 眨眼 + 托盘 ✅
 - [x] **Phase 2：能说** — 对话气泡 + DeepSeek API + 自动表情 ✅
 - [x] **Phase 3：能陪** — 空闲动作 + 自言自语 + 时间问候 + 喝水提醒 + deadline 催稿 ✅
-- [ ] **Phase 4：能唱** — 网易云搜歌/播放 + 歌词浮窗 🟢 进行中
-- [ ] **Phase 5：灵魂** — 天气显示 + 纪念日彩蛋 + 情绪曲线 + 微信联动 🟢 进行中
+- [x] **Phase 4：能唱** — 网易云搜歌/播放 + 歌词浮窗 ✅
+- [ ] **Phase 5：能说（语音）** — GPT-SoVITS 语音合成 + AI 回复朗读 🟢 进行中
+- [ ] **Phase 6：灵魂** — 天气显示 + 纪念日彩蛋 + 情绪曲线 + 语音情感自适应 + 微信联动 🟢 进行中
 
 ---
 
@@ -94,6 +118,7 @@ npm start
 | Live2D 桥接 | pixi-live2d-display | 社区最成熟封装，支持 Cubism 3 | 2026-05-28 |
 | 音乐源 | 网易云 API | 开源稳定、歌单丰富 | 2026-05-28 |
 | AI 后端 | DeepSeek API | 国内直连、OpenAI 兼容格式 | 2026-05-28 |
+| TTS 引擎 | GPT-SoVITS | 中文声音克隆，.pth 模型推理 | 2026-05-28 |
 | 模块开发 | 独立文件夹 → 后整合 | 模块可单独测试 | 2026-05-28 |
 
 ---

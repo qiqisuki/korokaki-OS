@@ -93,6 +93,20 @@ SettingsPanel.prototype._render = function () {
           '<span class="st-opacity-value">' + Math.round((s.opacity || 1) * 100) + '%</span>' +
         '</div>' +
       '</div>' +
+      // TTS 语音
+      '<div class="st-section">' +
+        '<div class="st-section-title">🔊 语音合成 (TTS)</div>' +
+        '<label class="st-toggle">' +
+          '<input type="checkbox" id="stTtsEnabled" ' + (s.ttsEnabled !== false ? 'checked' : '') + '>' +
+          '<span>启用语音（AI 回复时说话）</span>' +
+        '</label>' +
+        '<div class="st-row" style="margin-top:10px">' +
+          '<label>语速 <input type="range" class="st-opacity-slider" id="stTtsSpeed" min="50" max="200" value="' + ((s.ttsSpeed || 1) * 100) + '"></label>' +
+          '<span class="st-opacity-value">' + Math.round((s.ttsSpeed || 1) * 100) + '%</span>' +
+        '</div>' +
+        '<input type="text" class="st-input" id="stTtsModelPath" value="' + (s.ttsModelPath || '') + '" placeholder="模型路径 (默认: assets/tts/model.pth)" style="margin-top:8px">' +
+        '<div class="st-hint">GPT-SoVITS 模型，需先 pip install torch flask + GPT-SoVITS</div>' +
+      '</div>' +
       // 保存
       '<div class="st-section">' +
         '<button class="st-save-btn">💾 保存设置</button>' +
@@ -142,6 +156,11 @@ SettingsPanel.prototype._save = function () {
 
   var opacity = parseInt(this._panel.querySelector('#stOpacity').value) / 100
   store.set('opacity', opacity)
+
+  store.set('ttsEnabled', this._panel.querySelector('#stTtsEnabled').checked)
+  store.set('ttsSpeed', parseInt(this._panel.querySelector('#stTtsSpeed').value) / 100)
+  var ttsModelPath = this._panel.querySelector('#stTtsModelPath').value.trim()
+  if (ttsModelPath) store.set('ttsModelPath', ttsModelPath)
 
   this._hide()
   // 提示需要重启生效

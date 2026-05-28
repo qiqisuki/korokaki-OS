@@ -1,0 +1,6 @@
+flask>=2.0
+torch>=2.0
+numpy
+# GPT-SoVITS — 从源码安装:
+# git clone https://github.com/RVC-Boss/GPT-SoVITS.git
+# cd GPT-SoVITS && pip install -r requirements.txt

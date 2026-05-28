@@ -9,6 +9,7 @@ let win = null
 let tray = null
 let isQuitting = false
 let apiServer = null
+let ttsServer = null
 
 function createTrayIcon() {
   const size = 16
@@ -169,6 +170,49 @@ function startApiServer() {
   apiServer.on('error', function () { apiServer = null })
 }
 
+function startTtsServer() {
+  var pythonPath = 'python'
+  var scriptPath = join(ROOT, 'tts_server', 'tts_server.py')
+  var fs = require('fs')
+
+  if (!fs.existsSync(scriptPath)) {
+    console.warn('[tts] TTS 服务器脚本不存在:', scriptPath)
+    return
+  }
+
+  var settings = {}
+  try {
+    var settingsPath = join(ROOT, 'assets', 'settings.json')
+    if (fs.existsSync(settingsPath)) {
+      settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
+    }
+  } catch (e) {}
+
+  var modelPath = settings.ttsModelPath || join(ROOT, 'assets', 'tts', 'model.pth')
+
+  var args = [scriptPath, '--model_path', modelPath, '--port', '9880']
+  if (settings.ttsRefAudio) {
+    args.push('--ref_audio', settings.ttsRefAudio)
+  }
+
+  try {
+    ttsServer = require('child_process').spawn(pythonPath, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    ttsServer.stdout.on('data', function (d) {
+      process.stdout.write('[tts] ' + d.toString())
+    })
+    ttsServer.stderr.on('data', function (d) {
+      process.stderr.write('[tts] ' + d.toString())
+    })
+    ttsServer.on('error', function () { ttsServer = null })
+    ttsServer.on('exit', function () { ttsServer = null })
+    console.log('[tts] TTS 服务器启动中...')
+  } catch (e) {
+    console.warn('[tts] 无法启动 TTS 服务器:', e.message)
+  }
+}
+
 app.whenReady().then(() => {
   // 读取设置中的开机自启 + 透明度
   try {
@@ -185,6 +229,7 @@ app.whenReady().then(() => {
   } catch (e) {}
 
   startApiServer()
+  startTtsServer()
   createSplash()
 })
 
@@ -195,4 +240,5 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   isQuitting = true
   if (apiServer) apiServer.kill()
+  if (ttsServer) ttsServer.kill()
 })
