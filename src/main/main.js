@@ -203,7 +203,7 @@ function startTtsServer() {
     '-a', '127.0.0.1',
   ]
   if (fs.existsSync(refAudio)) {
-    args.push('-dr', refAudio, '-dt', '你好，我是会长姐姐。', '-dl', 'zh')
+    args.push('-dr', refAudio, '-dt', '收到了，看，来自b站的千舰奖牌。', '-dl', 'zh')
   }
 
   try {

@@ -7,6 +7,9 @@ assets/settings.json
 assets/music-cookie.json
 assets/chat-history.json
 
+# TTS 模型和参考音频 — 用户自行准备
+assets/tts/
+
 # 系统文件
 .DS_Store
 Thumbs.db
