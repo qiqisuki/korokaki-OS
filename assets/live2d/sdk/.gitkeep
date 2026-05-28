@@ -1,0 +1,3 @@
+将 live2dcubismcore.min.js 放在此目录下
+从 https://www.live2d.com/download/cubism-sdk/ 下载 Cubism SDK for Web
+解压后找到 Core/live2dcubismcore.min.js

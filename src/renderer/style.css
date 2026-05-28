@@ -1,0 +1,1408 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url('../../assets/under.jpg') center/cover no-repeat;
+  opacity: 0.55;
+  z-index: -1;
+}
+
+#live2d-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -webkit-app-region: drag;
+  cursor: pointer;
+}
+
+/* 错误提示浮层 */
+.error-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+  -webkit-app-region: drag;
+}
+
+.error-overlay a {
+  color: #88ccff;
+}
+
+.error-overlay code {
+  background: rgba(255,255,255,0.15);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+/* 对话触发按钮 */
+.chat-trigger {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 22px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  z-index: 15;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  -webkit-app-region: no-drag;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.chat-trigger:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.05);
+}
+
+.chat-trigger.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+}
+
+/* 对话气泡 */
+.chat-bubble {
+  position: fixed;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  max-width: 82%;
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  will-change: opacity, transform;
+}
+
+.chat-bubble.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 音乐播放时气泡下移 */
+.music-active .chat-bubble {
+  top: 225px;
+}
+
+.music-active .ambience-signature {
+  top: 44%;
+}
+
+/* 输入浮层 */
+.chat-input-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  z-index: 20;
+  will-change: opacity, transform;
+}
+
+.chat-input-overlay.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.chat-input-field {
+  flex: 1;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  outline: none;
+  background: rgba(255,255,255,0.9);
+  color: #333;
+  -webkit-app-region: no-drag;
+  transition: box-shadow 0.25s ease, background 0.2s;
+}
+
+.chat-input-field:focus {
+  background: rgba(255,255,255,1);
+  box-shadow: 0 0 0 3px rgba(105, 181, 120, 0.3);
+}
+
+.chat-input-field::placeholder {
+  color: #999;
+}
+
+.chat-send-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background: #69b578;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background 0.2s, transform 0.12s ease;
+}
+
+.chat-send-btn:hover {
+  background: #5a9e68;
+}
+
+.chat-send-btn:active {
+  background: #4d8a5a;
+  transform: scale(0.95);
+}
+
+/* 音乐按钮 */
+.music-trigger {
+  position: fixed;
+  bottom: 56px;
+  left: 16px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 22px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  z-index: 15;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  -webkit-app-region: no-drag;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.music-trigger:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.05);
+}
+
+/* 播放器卡片 */
+.player-card {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 250px;
+  background: rgba(60, 60, 70, 0.78);
+  border-radius: 0 0 18px 18px;
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  align-content: center;
+  opacity: 0;
+  transform: translateY(-100%);
+  transition: opacity 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  z-index: 18;
+  -webkit-app-region: no-drag;
+  will-change: opacity, transform;
+}
+
+.player-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.player-card-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  color: rgba(255,255,255,0.5);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+  transition: background 0.15s;
+}
+
+.player-card-close:hover {
+  background: rgba(255,80,80,0.4);
+  color: #fff;
+}
+
+.player-cover {
+  width: 110px;
+  height: 110px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+
+.player-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.player-title {
+  font-size: 17px;
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-artist {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.player-ctrl-btn {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+  transition: background 0.15s, transform 0.1s ease;
+}
+
+.player-ctrl-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.player-ctrl-btn:active {
+  transform: scale(0.9);
+}
+
+.player-ctrl-play {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+  background: rgba(255,255,255,0.2);
+}
+
+.player-volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.player-volume-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.player-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.2);
+  outline: none;
+  cursor: pointer;
+}
+
+.player-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.player-lyrics {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.player-lyrics-prev,
+.player-lyrics-next {
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-lyrics-curr {
+  font-size: 15px;
+  color: rgba(255,255,255,0.85);
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 音乐搜索面板 */
+.music-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 55%;
+  background: rgba(20, 20, 30, 0.94);
+  border-radius: 18px 18px 0 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.32s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  z-index: 25;
+  will-change: opacity, transform;
+}
+
+.music-panel.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.music-panel-tabs {
+  display: flex;
+  padding: 12px 14px 0;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.music-tab {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 14px 14px 0 0;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background 0.2s, color 0.2s;
+}
+
+.music-tab:hover {
+  color: rgba(255,255,255,0.7);
+}
+
+.music-tab.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+.music-panel-header {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  -webkit-app-region: no-drag;
+}
+
+.music-search-field {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 22px;
+  font-size: 14px;
+  outline: none;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  -webkit-app-region: no-drag;
+  transition: background 0.2s, box-shadow 0.25s ease;
+}
+
+.music-search-field:focus {
+  background: rgba(255,255,255,0.18);
+  box-shadow: 0 0 0 2px rgba(105, 181, 120, 0.25);
+}
+
+.music-search-field::placeholder {
+  color: rgba(255,255,255,0.4);
+}
+
+.music-panel-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+
+.music-results, .music-playlist {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  -webkit-app-region: no-drag;
+}
+
+.music-loading {
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  padding: 30px 0;
+  font-size: 13px;
+}
+
+.music-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-app-region: no-drag;
+}
+
+.music-result-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.music-result-name {
+  color: #fff;
+  font-size: 13px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-result-artist {
+  color: rgba(255,255,255,0.45);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.music-result-add {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.music-result-add:hover {
+  background: #69b578;
+}
+
+/* 播放列表 */
+.music-playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-app-region: no-drag;
+}
+
+.music-playlist-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.music-playlist-item.playing {
+  background: rgba(105, 181, 120, 0.15);
+}
+
+.music-playlist-item.playing .music-playlist-name {
+  color: #69b578;
+}
+
+.music-playlist-idx {
+  color: rgba(255,255,255,0.3);
+  font-size: 11px;
+  width: 20px;
+  text-align: center;
+}
+
+.music-playlist-name {
+  color: #fff;
+  font-size: 13px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-playlist-artist {
+  color: rgba(255,255,255,0.45);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.music-playlist-remove {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.music-playlist-remove:hover {
+  color: #ff5555;
+}
+
+/* 状态面板 */
+.status-trigger {
+  position: fixed;
+  top: 8px;
+  left: 12px;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 14;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  -webkit-app-region: no-drag;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.status-trigger:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.1);
+}
+
+.status-trigger.active {
+  background: rgba(105, 181, 120, 0.8);
+}
+
+.status-panel {
+  position: fixed;
+  top: 50px;
+  left: 12px;
+  width: 240px;
+  background: rgba(30, 30, 40, 0.94);
+  border-radius: 14px;
+  padding: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.28s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  z-index: 26;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  -webkit-app-region: no-drag;
+  overflow: hidden;
+  will-change: opacity, transform;
+}
+
+.status-panel.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sp-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sp-title {
+  font-size: 13px;
+  color: #fff;
+  font-weight: 600;
+  flex: 1;
+}
+
+.sp-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.sp-close:hover {
+  color: #fff;
+}
+
+.sp-body {
+  padding: 8px 0;
+}
+
+.sp-section {
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sp-section:last-child {
+  border-bottom: none;
+}
+
+.sp-section-title {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 6px;
+}
+
+.sp-weather {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sp-w-icon {
+  font-size: 22px;
+}
+
+.sp-w-temp {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sp-w-text {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+}
+
+.sp-deadline-empty {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+}
+
+.sp-deadline-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 11px;
+}
+
+.sp-dl-task {
+  color: rgba(255,255,255,0.7);
+}
+
+.sp-dl-time {
+  color: rgba(255,255,255,0.35);
+  font-size: 10px;
+}
+
+.sp-urgent-over .sp-dl-task { color: #ff6666; }
+.sp-urgent-over .sp-dl-time { color: #ff6666; }
+.sp-urgent-soon .sp-dl-task { color: #ffaa44; }
+
+.sp-pomo {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+}
+
+.sp-pomo b {
+  color: #69b578;
+  font-size: 16px;
+}
+
+/* 设置面板 */
+.settings-trigger {
+  position: fixed;
+  bottom: 56px;
+  left: 100px;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 15;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  -webkit-app-region: no-drag;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.settings-trigger:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.1);
+}
+
+.settings-trigger.active {
+  background: rgba(100, 100, 120, 0.8);
+}
+
+.settings-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 62%;
+  background: rgba(20, 20, 30, 0.95);
+  border-radius: 18px 18px 0 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.32s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  z-index: 27;
+  will-change: opacity, transform;
+}
+
+.settings-panel.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.st-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  -webkit-app-region: no-drag;
+}
+
+.st-title {
+  font-size: 15px;
+  color: #fff;
+  font-weight: 600;
+  flex: 1;
+}
+
+.st-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.st-close:hover { color: #fff; }
+
+.st-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  -webkit-app-region: no-drag;
+}
+
+.st-section {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.st-section-title {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 10px;
+}
+
+.st-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  -webkit-app-region: no-drag;
+  transition: background 0.2s, box-shadow 0.25s ease;
+}
+
+.st-input:focus {
+  background: rgba(255,255,255,0.16);
+  box-shadow: 0 0 0 2px rgba(105, 181, 120, 0.2);
+}
+
+.st-input::placeholder { color: rgba(255,255,255,0.3); }
+
+.st-hint {
+  font-size: 10px;
+  color: rgba(255,255,255,0.25);
+  margin-top: 6px;
+}
+
+.st-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.st-row label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.st-input-sm {
+  width: 52px;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  text-align: center;
+  outline: none;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  -webkit-app-region: no-drag;
+  transition: background 0.2s, box-shadow 0.25s ease;
+}
+
+.st-input-sm:focus {
+  background: rgba(255,255,255,0.16);
+  box-shadow: 0 0 0 2px rgba(105, 181, 120, 0.2);
+}
+
+.st-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+}
+
+.st-toggle input { accent-color: #69b578; }
+
+.st-opacity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.st-opacity-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.12);
+  outline: none;
+  cursor: pointer;
+}
+
+.st-opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #69b578;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(105, 181, 120, 0.4);
+}
+
+.st-opacity-value {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  min-width: 36px;
+  text-align: right;
+}
+
+.st-save-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  background: #69b578;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background 0.2s, transform 0.12s ease;
+}
+
+.st-save-btn:hover { background: #5a9e68; }
+.st-save-btn:active { background: #4d8a5a; transform: scale(0.97); }
+
+/* 天气组件 */
+.weather-widget {
+  position: fixed;
+  top: 8px;
+  right: 12px;
+  z-index: 12;
+  text-align: right;
+  -webkit-app-region: no-drag;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.music-active .weather-widget {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.weather-icon {
+  font-size: 20px;
+}
+
+.weather-temp {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.weather-greeting {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  margin-top: 1px;
+}
+
+/* 番茄钟 */
+.pomodoro-trigger {
+  position: fixed;
+  bottom: 16px;
+  left: 130px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 22px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  z-index: 15;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  -webkit-app-region: no-drag;
+  transition: opacity 0.25s ease, transform 0.25s ease, background 0.3s, color 0.3s, box-shadow 0.3s;
+  font-variant-numeric: tabular-nums;
+}
+
+.pomodoro-trigger:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.05);
+}
+
+.pomodoro-trigger.active {
+  background: rgba(255, 90, 80, 0.9);
+  color: #fff;
+  box-shadow: 0 2px 14px rgba(255, 90, 80, 0.35);
+}
+
+.pomodoro-trigger.active:hover {
+  background: rgba(255, 70, 60, 0.95);
+}
+
+.pomodoro-trigger.break {
+  background: rgba(140, 180, 140, 0.9);
+  color: #fff;
+  box-shadow: 0 2px 14px rgba(140, 180, 140, 0.35);
+}
+
+.pomodoro-trigger.break:hover {
+  background: rgba(120, 165, 120, 0.95);
+}
+
+/* 时钟 */
+.clock-widget {
+  position: fixed;
+  bottom: 100px;
+  left: 16px;
+  z-index: 14;
+  -webkit-app-region: no-drag;
+}
+
+.clock-time {
+  font-size: 22px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  line-height: 1.2;
+}
+
+.clock-date {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* 用户歌单 & 登录 */
+.music-user-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-app-region: no-drag;
+}
+
+/* 登录区域 */
+.music-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 14px;
+  gap: 14px;
+}
+
+.music-login-title {
+  font-size: 15px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.music-login-qr-wrap {
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.music-login-qr {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.music-login-loading {
+  color: #999;
+  font-size: 13px;
+  text-align: center;
+  padding: 10px;
+}
+
+.music-login-tip {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+}
+
+.music-login-refresh {
+  padding: 6px 20px;
+  border: none;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.music-login-refresh:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* 用户歌单头部 */
+.music-user-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  -webkit-app-region: no-drag;
+}
+
+.music-user-nickname {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 600;
+  flex: 1;
+}
+
+.music-user-logout {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.music-user-logout:hover {
+  background: rgba(255,80,80,0.3);
+  color: #ff6666;
+}
+
+/* 歌单列表 */
+.music-user-playlists {
+  padding: 6px 0;
+}
+
+.music-user-pl-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-app-region: no-drag;
+}
+
+.music-user-pl-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.music-user-pl-cover {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.music-user-pl-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.music-user-pl-name {
+  font-size: 13px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-user-pl-count {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+}
+
+/* 歌单详情 - 歌曲列表 */
+.music-user-back {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  -webkit-app-region: no-drag;
+}
+
+.music-user-back:hover {
+  color: #fff;
+}
+
+.music-user-pl-title {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 600;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-user-songs {
+  padding: 6px 0;
+}
+
+.music-user-song-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-app-region: no-drag;
+}
+
+.music-user-song-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.music-user-song-cover {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.music-user-song-name {
+  color: #fff;
+  font-size: 13px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-user-song-artist {
+  color: rgba(255,255,255,0.45);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.music-user-song-add {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.music-user-song-add:hover {
+  background: #69b578;
+}
+
+/* ---- 氛围：状态标签 ---- */
+
+.ambience-status {
+  position: fixed;
+  bottom: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 14px;
+  font-size: 12px;
+  color: #666;
+  z-index: 8;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), background 0.4s, color 0.4s;
+  opacity: 0.7;
+}
+
+.ambience-status.changed {
+  opacity: 1;
+  background: rgba(105, 181, 120, 0.82);
+  color: #fff;
+  transform: translateX(-50%) scale(1.06);
+}
+
+/* ---- 氛围：个性签名 ---- */
+
+.ambience-signature {
+  position: fixed;
+  top: 32%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  z-index: 8;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.8s ease, color 0.8s ease;
+  opacity: 0;
+}
+
+.ambience-signature.visible {
+  opacity: 1;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ---- 氛围：漂浮粒子 ---- */
+
+.ambience-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.ambience-particle {
+  position: absolute;
+  bottom: 35%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  animation: particle-float linear forwards;
+  pointer-events: none;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: var(--opacity-start, 0.3);
+  }
+  20% {
+    opacity: var(--opacity-peak, 0.5);
+  }
+  50% {
+    transform: translateY(-120px) translateX(var(--sway, 10px));
+  }
+  100% {
+    transform: translateY(-280px) translateX(calc(var(--sway, 10px) * -0.6));
+    opacity: 0;
+  }
+}

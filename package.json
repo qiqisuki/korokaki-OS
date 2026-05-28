@@ -1,0 +1,55 @@
+{
+  "name": "desktop-mascot",
+  "version": "0.1.0",
+  "description": "会长姐姐的数字分身 — Electron透明浮窗 + Claude API + 网易云音乐",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "lint": "eslint src/"
+  },
+  "author": "小夜 & 会长姐姐",
+  "license": "MIT",
+  "dependencies": {
+    "electron-store": "^8.0.0",
+    "howler": "^2.2.0",
+    "NeteaseCloudMusicApi": "^4.32.0",
+    "pixi-live2d-display": "^0.4.0",
+    "pixi.js": "^6.5.0"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^24.0.0",
+    "sharp": "^0.34.5"
+  },
+  "build": {
+    "appId": "com.xiaoye.desktop-mascot",
+    "productName": "korokaki OS",
+    "directories": {
+      "output": "dist"
+    },
+    "asar": {
+      "smartUnpack": true
+    },
+    "files": [
+      "src/**",
+      "assets/**",
+      "node_modules/**",
+      "package.json"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "assets/icon/icon.png",
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

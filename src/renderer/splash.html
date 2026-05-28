@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: transparent;
+    border-radius: 14px;
+    -webkit-app-region: no-drag;
+  }
+
+  .splash {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeIn 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  }
+
+  .splash.fade-out {
+    animation: fadeOut 0.35s ease-in forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.97); filter: blur(2px); }
+    to   { opacity: 1; transform: scale(1);    filter: blur(0); }
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+
+  .splash-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    border-radius: 14px;
+  }
+
+  .text-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .text-line {
+    position: absolute;
+    font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+    font-size: 11px;
+    color: #333;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .text-line.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+<div class="splash" id="splash">
+  <img class="splash-img" id="splashImg" src="" alt="beginui">
+  <div class="text-layer" id="textLayer"></div>
+</div>
+<script>
+  const { ipcRenderer } = require('electron')
+  const sound = require('./sound')
+
+  var LOADING_LINES = [
+    '正在初始化运行环境...',
+    '检查系统完整性 ...... OK',
+    '加载核心模块: core, net, fs, gui, audio',
+    '预加载角色资源: yumi.model3.json',
+    ' textures × 24  motions × 52  expressions × 17',
+    'Live2D Cubism Core v4.2.1',
+    ' 物理模拟 · 自动眨眼 · 呼吸',
+    '正在连接会长姐姐的网络...',
+    '正在同步记忆数据...',
+    'READY.',
+  ]
+
+  function isLight(r, g, b) {
+    // 亮度足够高才算白色/浅色区域
+    return (r > 200 && g > 200 && b > 200)
+  }
+
+  function findWhiteZones(img) {
+    var canvas = document.createElement('canvas')
+    var w = canvas.width = img.naturalWidth
+    var h = canvas.height = img.naturalHeight
+    var ctx = canvas.getContext('2d')
+    ctx.drawImage(img, 0, 0, w, h)
+    var data = ctx.getImageData(0, 0, w, h).data
+
+    // 将图片分成网格，找出每个格子是否是白色区域
+    var gridRows = 30
+    var gridCols = 20
+    var cellH = Math.floor(h / gridRows)
+    var cellW = Math.floor(w / gridCols)
+    var zones = []
+
+    for (var row = 0; row < gridRows; row++) {
+      for (var col = 0; col < gridCols; col++) {
+        var lightPx = 0, totalPx = 0
+        var yStart = row * cellH, yEnd = Math.min((row + 1) * cellH, h)
+        var xStart = col * cellW, xEnd = Math.min((col + 1) * cellW, w)
+        for (var y = yStart; y < yEnd; y += 3) {
+          for (var x = xStart; x < xEnd; x += 3) {
+            var i = (y * w + x) * 4
+            if (isLight(data[i], data[i + 1], data[i + 2])) lightPx++
+            totalPx++
+          }
+        }
+        var ratio = lightPx / totalPx
+        if (ratio > 0.55) {
+          zones.push({
+            row: row, col: col,
+            top: yStart / h, left: xStart / w,
+            width: (xEnd - xStart) / w, height: (yEnd - yStart) / h,
+            ratio: ratio,
+          })
+        }
+      }
+    }
+    return zones
+  }
+
+  function mergeZones(zones) {
+    // 按 top 排序，合并相邻行同列的白色区域
+    zones.sort(function (a, b) { return a.top - b.top || a.left - b.left })
+    return zones
+  }
+
+  function pickTextPositions(zones, count) {
+    zones = mergeZones(zones)
+    // 选取最白的区域来放字
+    zones.sort(function (a, b) { return b.ratio - a.ratio })
+    // 取前 count 个，再按 top 排序
+    var picked = zones.slice(0, Math.min(count, zones.length))
+    picked.sort(function (a, b) { return a.top - b.top || a.left - b.left })
+    return picked
+  }
+
+  async function init() {
+    var imgPath = await ipcRenderer.invoke('get-splash-image')
+    var img = document.getElementById('splashImg')
+
+    img.onload = function () {
+      sound.splashBg()
+      var w = img.naturalWidth
+      var h = img.naturalHeight
+      ipcRenderer.send('splash-size', { width: w, height: h })
+
+      var zones = findWhiteZones(img)
+      var positions = pickTextPositions(zones, LOADING_LINES.length)
+
+      var layer = document.getElementById('textLayer')
+      var lineCount = Math.min(LOADING_LINES.length, positions.length)
+
+      for (var i = 0; i < lineCount; i++) {
+        ;(function (idx) {
+          setTimeout(function () {
+            var el = document.createElement('div')
+            el.className = 'text-line'
+            // 放在白色区域中间偏左
+            el.style.top  = (positions[idx].top * 100 + (positions[idx].height * 50)) + '%'
+            el.style.left = (positions[idx].left * 100 + 2) + '%'
+            el.textContent = LOADING_LINES[idx]
+            layer.appendChild(el)
+            requestAnimationFrame(function () { el.classList.add('visible') })
+          }, 200 + idx * 300)
+        })(i)
+      }
+    }
+
+    img.src = imgPath
+
+    setTimeout(function () {
+      document.getElementById('splash').classList.add('fade-out')
+      setTimeout(function () {
+        ipcRenderer.send('splash-done')
+      }, 400)
+    }, 3800)
+  }
+
+  init()
+</script>
+</body>
+</html>
