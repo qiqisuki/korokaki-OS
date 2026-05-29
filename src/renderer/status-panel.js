@@ -2,8 +2,9 @@ const fs = require('fs')
 const path = require('path')
 const state = require('./state')
 
-function StatusPanel(chatUI) {
+function StatusPanel(chatUI, mood) {
   this._chatUI = chatUI
+  this._mood = mood || null
   this._btn = null
   this._panel = null
   this._visible = false
@@ -73,6 +74,26 @@ StatusPanel.prototype._render = function () {
     ? '今日已完成 <b>' + round + '</b> 轮番茄钟 🎉'
     : '今天还没有开始番茄钟哦'
 
+  // 好感度
+  var affectionHtml = ''
+  if (this._mood) {
+    var stats = this._mood.getStats()
+    var hearts = ''
+    var barWidth = stats.affection
+    for (var k = 0; k < 5; k++) {
+      hearts += k * 20 < stats.affection ? '❤️' : '🤍'
+    }
+    affectionHtml =
+      '<div class="sp-section">' +
+        '<div class="sp-section-title">💕 姐姐好感度</div>' +
+        '<div class="sp-affection">' +
+          '<div class="sp-affection-hearts">' + hearts + '</div>' +
+          '<div class="sp-affection-bar"><div class="sp-affection-fill" style="width:' + barWidth + '%"></div></div>' +
+          '<div class="sp-affection-text">' + stats.levelName + ' · ' + stats.affection + '/100 · 共互动 ' + stats.interactionCount + ' 次</div>' +
+        '</div>' +
+      '</div>'
+  }
+
   this._panel.innerHTML =
     '<div class="sp-header">' +
       '<span class="sp-title">📋 ' + dateStr + ' 小夜状态</span>' +
@@ -87,6 +108,7 @@ StatusPanel.prototype._render = function () {
           '<span class="sp-w-text">' + w.text + '</span>' +
         '</div>' +
       '</div>' +
+      affectionHtml +
       '<div class="sp-section">' +
         '<div class="sp-section-title">⏰ 待办截止</div>' +
         deadlineHtml +

@@ -1,9 +1,10 @@
 const sound = require('./sound')
 
-function Interactions(canvas, expressionState, chatUI) {
+function Interactions(canvas, expressionState, chatUI, mood) {
   this._canvas = canvas
   this._expressionState = expressionState
   this._chatUI = chatUI
+  this._mood = mood
   this._clickCount = 0
   this._clickTimer = null
   this._hoverTimer = null
@@ -93,6 +94,18 @@ Interactions.prototype._init = function () {
 
 Interactions.prototype._onTripleClick = function () {
   sound.pat()
+  if (this._mood) {
+    // 如果姐姐在睡觉，戳醒她
+    if (this._mood.isAsleep()) {
+      var wake = this._mood.wakeUp()
+      if (wake) {
+        this._chatUI.showBubble(wake.text, 5000)
+        this._expressionState.set(wake.expr)
+        return
+      }
+    }
+    this._mood.onUserClick()
+  }
 
   // 怒气系统：连续戳会累积怒气
   clearTimeout(this._rageTimer)
@@ -178,6 +191,7 @@ Interactions.prototype._onRageExplode = function () {
 }
 
 Interactions.prototype._onHeadHover = function () {
+  if (this._mood) this._mood.onUserHover()
   this._chatUI.showBubble('嗯？怎么一直看着姐姐... [love]', 3500)
   this._expressionState.set('love')
 }

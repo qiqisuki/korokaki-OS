@@ -13,6 +13,10 @@ const { StatusPanel } = require('./status-panel')
 const { SettingsPanel } = require('./settings-panel')
 const { ClockWidget } = require('./clock')
 const { Ambience } = require('./ambience')
+const { Mood } = require('./mood')
+const { MiniGames } = require('./minigames')
+const { TodoPanel } = require('./todo-panel')
+const { Diary } = require('./diary')
 
 Live2DModel.registerTicker(PIXI.Ticker)
 
@@ -139,22 +143,27 @@ async function init() {
   fitModel()
 
   expressionState = new ExpressionState(model)
-  chatUI = new ChatUI(model, expressionState)
-  var behavior = new IdleBehavior(model, expressionState, chatUI)
+  var mood = new Mood(expressionState)
+  var diary = new Diary(mood)
+
+  chatUI = new ChatUI(model, expressionState, mood)
+  var behavior = new IdleBehavior(model, expressionState, chatUI, mood)
   chatUI._behavior = behavior
 
   var reminders = new ReminderSystem(chatUI, expressionState)
   reminders.start()
 
-  new MusicUI(chatUI, expressionState)
+  new MusicUI(chatUI, expressionState, mood)
   new PomodoroWidget(chatUI, expressionState)
   new WeatherWidget(chatUI)
   new DailyWords(chatUI)
-  new Interactions(canvas, expressionState, chatUI)
-  new StatusPanel(chatUI)
+  new Interactions(canvas, expressionState, chatUI, mood)
+  new StatusPanel(chatUI, mood)
   new SettingsPanel()
   new ClockWidget()
-  new Ambience(expressionState)
+  new Ambience(expressionState, mood)
+  new MiniGames(expressionState, chatUI)
+  new TodoPanel(chatUI)
 
   canvas.addEventListener('contextmenu', async (e) => {
     e.preventDefault()

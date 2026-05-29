@@ -68,6 +68,11 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  .text-line.light {
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 0 8px rgba(0,0,0,0.6);
+  }
 </style>
 </head>
 <body>
@@ -156,33 +161,58 @@
 
   async function init() {
     var imgPath = await ipcRenderer.invoke('get-splash-image')
+    var variant = await ipcRenderer.invoke('get-splash-variant')
+    var isDark = variant === 1
+
     var img = document.getElementById('splashImg')
 
     img.onload = function () {
-      sound.splashBg()
+      if (isDark) {
+        sound.splashDark()
+      } else {
+        sound.splashBg()
+      }
       var w = img.naturalWidth
       var h = img.naturalHeight
       ipcRenderer.send('splash-size', { width: w, height: h })
 
-      var zones = findWhiteZones(img)
-      var positions = pickTextPositions(zones, LOADING_LINES.length)
-
       var layer = document.getElementById('textLayer')
-      var lineCount = Math.min(LOADING_LINES.length, positions.length)
 
-      for (var i = 0; i < lineCount; i++) {
-        ;(function (idx) {
-          setTimeout(function () {
-            var el = document.createElement('div')
-            el.className = 'text-line'
-            // 放在白色区域中间偏左
-            el.style.top  = (positions[idx].top * 100 + (positions[idx].height * 50)) + '%'
-            el.style.left = (positions[idx].left * 100 + 2) + '%'
-            el.textContent = LOADING_LINES[idx]
-            layer.appendChild(el)
-            requestAnimationFrame(function () { el.classList.add('visible') })
-          }, 200 + idx * 300)
-        })(i)
+      if (isDark) {
+        // 暗色背景：文字均匀分布从上到下
+        var gap = 80 / LOADING_LINES.length
+        for (var i = 0; i < LOADING_LINES.length; i++) {
+          ;(function (idx) {
+            setTimeout(function () {
+              var el = document.createElement('div')
+              el.className = 'text-line light'
+              el.style.top = (8 + idx * gap) + '%'
+              el.style.left = '8%'
+              el.textContent = LOADING_LINES[idx]
+              layer.appendChild(el)
+              requestAnimationFrame(function () { el.classList.add('visible') })
+            }, 200 + idx * 300)
+          })(i)
+        }
+      } else {
+        // 亮色背景：检测白色区域放置文字
+        var zones = findWhiteZones(img)
+        var positions = pickTextPositions(zones, LOADING_LINES.length)
+        var lineCount = Math.min(LOADING_LINES.length, positions.length)
+
+        for (var j = 0; j < lineCount; j++) {
+          ;(function (idx) {
+            setTimeout(function () {
+              var el = document.createElement('div')
+              el.className = 'text-line'
+              el.style.top  = (positions[idx].top * 100 + (positions[idx].height * 50)) + '%'
+              el.style.left = (positions[idx].left * 100 + 2) + '%'
+              el.textContent = LOADING_LINES[idx]
+              layer.appendChild(el)
+              requestAnimationFrame(function () { el.classList.add('visible') })
+            }, 200 + idx * 300)
+          })(j)
+        }
       }
     }
 
@@ -193,7 +223,7 @@
       setTimeout(function () {
         ipcRenderer.send('splash-done')
       }, 400)
-    }, 3800)
+    }, 4200)
   }
 
   init()

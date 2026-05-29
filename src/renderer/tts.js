@@ -1,8 +1,7 @@
 const store = require('../shared/settings-store')
 
 function TTSSpeaker() {
-  this._enabled = store.get('ttsEnabled') !== false   // 默认开启
-  this._speed = store.get('ttsSpeed') || 1.0
+  this._enabled = store.get('ttsEnabled') !== false
   this._current = null
 }
 
@@ -10,24 +9,19 @@ TTSSpeaker.prototype.setEnabled = function (val) {
   this._enabled = val
 }
 
-TTSSpeaker.prototype.setSpeed = function (val) {
-  this._speed = val
-}
+TTSSpeaker.prototype.speak = function (text, onend) {
+  if (!this._enabled) { if (onend) onend(); return }
+  if (!text || !text.trim()) { if (onend) onend(); return }
 
-TTSSpeaker.prototype.speak = function (text) {
-  if (!this._enabled) return
-  if (!text || !text.trim()) return
-
-  // 去除表情标记 [xxx]
   var clean = text.replace(/\[[^\]]+\]/g, '').trim()
-  if (!clean) return
+  if (!clean) { if (onend) onend(); return }
 
   var self = this
-
-  // 打断当前播放
   this.stop()
 
-  // GPT-SoVITS API: GET /?text=...&text_language=zh
+  var vol = store.get('ttsVolume')
+  if (vol == null) vol = 0.8
+
   var url = 'http://127.0.0.1:9880/?text=' + encodeURIComponent(clean) + '&text_language=zh'
 
   fetch(url)
@@ -42,21 +36,24 @@ TTSSpeaker.prototype.speak = function (text) {
         src: [blobUrl],
         format: ['wav'],
         html5: true,
+        volume: vol,
         onend: function () {
           URL.revokeObjectURL(blobUrl)
           self._current = null
+          if (onend) onend()
         },
         onloaderror: function () {
           URL.revokeObjectURL(blobUrl)
           self._current = null
+          if (onend) onend()
         },
       })
       self._current = howl
       howl.play()
     })
     .catch(function (err) {
-      // 静默降级 — TTS 服务不可用不影响聊天
       console.warn('[tts] 语音合成失败:', err.message)
+      if (onend) setTimeout(onend, 6000)
     })
 }
 

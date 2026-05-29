@@ -1,9 +1,12 @@
 const netease = require('../music/netease-api')
 const { Player } = require('../music/player')
+const store = require('../shared/settings-store')
+const { diary } = require('./diary')
 
-function MusicUI(chatUI, expressionState) {
+function MusicUI(chatUI, expressionState, mood) {
   this._chatUI = chatUI
   this._expressionState = expressionState
+  this._mood = mood || null
   this._player = new Player()
   this._panel = null
   this._results = null
@@ -70,8 +73,15 @@ MusicUI.prototype._init = function () {
   })
 
   var volumeSlider = card.querySelector('.player-volume-slider')
+  var savedVol = store.get('musicVolume')
+  if (savedVol != null) {
+    volumeSlider.value = savedVol * 100
+  }
+  self._player.volume(volumeSlider.value / 100)
   volumeSlider.addEventListener('input', function () {
-    self._player.volume(this.value / 100)
+    var v = this.value / 100
+    self._player.volume(v)
+    store.set('musicVolume', v)
   })
 
   card.querySelector('.player-card-close').addEventListener('click', function () {
@@ -144,6 +154,10 @@ MusicUI.prototype._updatePlayerCard = function (state) {
     if (this._expressionState) {
       this._expressionState.set('music')
     }
+    if (this._mood) {
+      this._mood.onMusicPlay({ name: state.song.name, artist: state.song.artist })
+    }
+    diary.logMusic(state.song.name)
   } else if (state.song) {
     this._playerCard.classList.add('visible')
     document.body.classList.add('music-active')
@@ -161,10 +175,22 @@ MusicUI.prototype._updatePlayerCard = function (state) {
     if (this._expressionState) {
       this._expressionState.set('idle')
     }
+    if (this._mood) {
+      this._mood.onMusicStop()
+    }
   }
 }
 
 MusicUI.prototype._togglePlay = function () {
+  if (!this._player._current) {
+    // 没有正在播放的歌，尝试播放列表第一首
+    var list = this._player.getPlaylist()
+    if (list.length > 0) {
+      var self = this
+      this._player.playIndex(0, function (id) { return netease.getSongUrl(id) })
+    }
+    return
+  }
   if (this._player._isPlaying) {
     this._player.pause()
   } else {

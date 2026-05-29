@@ -1,9 +1,12 @@
-function Ambience(expressionState) {
+function Ambience(expressionState, mood) {
   this._expressionState = expressionState
+  this._mood = mood || null
+  this._currentExpr = 'idle'
   this._statusEl = null
   this._signatureEl = null
   this._particleTimer = null
   this._signatureTimer = null
+  this._holidayParticleTimer = null
   this._init()
 }
 
@@ -16,6 +19,7 @@ Ambience.prototype._init = function () {
   var self = this
   if (this._expressionState && this._expressionState.onChange) {
     this._expressionState.onChange(function (name) {
+      self._currentExpr = name
       self._updateStatus(name)
     })
   }
@@ -133,18 +137,33 @@ Ambience.prototype._startParticles = function () {
 }
 
 Ambience.prototype._spawnParticle = function () {
+  // 节日特效粒子 (30% 概率)
+  if (this._mood && this._mood.isHolidayActive()) {
+    if (Math.random() < 0.3) {
+      var h = this._mood._activeHoliday
+      var ptype = _holidayParticleType(h && h.name)
+      if (ptype === 'heart') { this._spawnHeart(); return }
+      if (ptype === 'snow')  { this._spawnSnow(); return }
+      if (ptype === 'sakura') { this._spawnSakura(); return }
+      if (ptype === 'firework') { this._spawnFirework(); return }
+    }
+  }
+
   var el = document.createElement('div')
-  var size = 2 + Math.random() * 4
-  var left = 20 + Math.random() * 60 // 20%-80% 宽度
+  var size = 3 + Math.random() * 5
+  var left = 20 + Math.random() * 60
   var duration = 6 + Math.random() * 8
-  var sway = -15 + Math.random() * 30 // 水平漂移范围
-  var opacity = 0.15 + Math.random() * 0.25
+  var sway = -15 + Math.random() * 30
+  var opacity = 0.25 + Math.random() * 0.3
+  var color = _exprColor(this._currentExpr)
 
   el.className = 'ambience-particle'
   el.style.left = left + '%'
   el.style.width = size + 'px'
   el.style.height = size + 'px'
   el.style.opacity = opacity
+  el.style.background = color
+  el.style.boxShadow = '0 0 ' + (size * 2) + 'px ' + color
   el.style.setProperty('--sway', sway + 'px')
   el.style.animationDuration = duration + 's'
   el.style.animationDelay = '0s'
@@ -157,8 +176,86 @@ Ambience.prototype._spawnParticle = function () {
   }, duration * 1000 + 500)
 }
 
+Ambience.prototype._spawnHeart = function () {
+  var el = document.createElement('div')
+  el.className = 'ambience-heart'
+  el.textContent = '💕'
+  el.style.left = (20 + Math.random() * 60) + '%'
+  el.style.fontSize = (10 + Math.random() * 16) + 'px'
+  el.style.animationDuration = (4 + Math.random() * 5) + 's'
+  this._particleContainer.appendChild(el)
+  var self = this
+  setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el) }, 10000)
+}
+
+Ambience.prototype._spawnSnow = function () {
+  var el = document.createElement('div')
+  el.className = 'ambience-snow'
+  el.textContent = '❄️'
+  el.style.left = (5 + Math.random() * 90) + '%'
+  el.style.fontSize = (8 + Math.random() * 14) + 'px'
+  el.style.animationDuration = (5 + Math.random() * 7) + 's'
+  this._particleContainer.appendChild(el)
+  var self = this
+  setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el) }, 13000)
+}
+
+Ambience.prototype._spawnSakura = function () {
+  var el = document.createElement('div')
+  el.className = 'ambience-sakura'
+  el.textContent = '🌸'
+  el.style.left = (5 + Math.random() * 90) + '%'
+  el.style.fontSize = (10 + Math.random() * 14) + 'px'
+  el.style.animationDuration = (5 + Math.random() * 6) + 's'
+  this._particleContainer.appendChild(el)
+  var self = this
+  setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el) }, 12000)
+}
+
+Ambience.prototype._spawnFirework = function () {
+  var el = document.createElement('div')
+  el.className = 'ambience-firework'
+  el.textContent = '🎆'
+  el.style.left = (10 + Math.random() * 80) + '%'
+  el.style.top = (10 + Math.random() * 40) + '%'
+  el.style.fontSize = (18 + Math.random() * 24) + 'px'
+  this._particleContainer.appendChild(el)
+  var self = this
+  setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el) }, 1500)
+}
+
+function _holidayParticleType(name) {
+  if (!name) return 'snow'
+  if (name === '情人节' || name === '七夕') return 'heart'
+  if (name === '圣诞节') return 'snow'
+  if (name === '春节' || name === '除夕' || name === '元旦') return 'firework'
+  if (name === '初遇日') return 'sakura'
+  return 'snow'
+}
+
+function _exprColor(expr) {
+  var map = {
+    idle: 'rgba(255,255,255,0.55)',
+    happy: 'rgba(255,215,0,0.7)',
+    love: 'rgba(255,105,180,0.7)',
+    angry: 'rgba(255,50,50,0.7)',
+    confused: 'rgba(100,180,255,0.7)',
+    teary: 'rgba(80,160,255,0.7)',
+    cry: 'rgba(50,140,255,0.7)',
+    sleep: 'rgba(160,120,240,0.7)',
+    music: 'rgba(80,200,120,0.7)',
+    work: 'rgba(255,170,50,0.7)',
+    tongue: 'rgba(255,140,0,0.7)',
+    smirk: 'rgba(255,150,30,0.7)',
+    waveR: 'rgba(255,255,255,0.55)',
+    waveL: 'rgba(255,255,255,0.55)',
+  }
+  return map[expr] || 'rgba(255,255,255,0.55)'
+}
+
 Ambience.prototype.destroy = function () {
   clearTimeout(this._particleTimer)
+  clearTimeout(this._holidayParticleTimer)
   clearTimeout(this._signatureTimer)
   clearTimeout(this._statusChangeTimer)
   if (this._statusEl) this._statusEl.remove()

@@ -52,10 +52,13 @@ desktop-mascot/
 │   │   └── session.js     # 会话管理
 │   ├── music/             # 音乐模块
 │   │   ├── netease-api.js # 网易云 API 封装
-│   │   └── player.js      # 播放控制器
+│   │   └── player.js      # 播放控制器 (自动下一首/错误跳过/音量记忆)
+│   ├── renderer/          # TTS 语音
+│   │   └── tts.js         # TTSSpeaker (GPT-SoVITS HTTP API → howler.js)
 │   └── shared/            # 共享
 │       ├── config.js      # 配置常量
-│       └── logger.js      # 日志
+│       ├── logger.js      # 日志
+│       └── settings-store.js  # electron-store 封装
 ├── assets/
 │   ├── live2d/            # Live2D 模型 + SDK
 │   │   ├── yumi/          # Cubism 3 模型（17 表情）
@@ -90,6 +93,12 @@ desktop-mascot/
 - **每个模块先在 `desktop-mascot/` 下独立建文件夹开发**（如 `music-player/`、`floating-window/`），最后统一整合进 `src/`
 - 模块独立可运行，不互相依赖。每个模块有自己的 `package.json` 和最小可测试入口
 - **同步更新 README.md**：写完一个模块立刻更新 README 的架构图、用法、后续优化项。保证文档和代码一致——出问题直接读 README 就能重新上手
+
+### Electron 窗口坑位 🚨
+- **body 设置了 `-webkit-app-region: drag`**，整个窗口默认可拖拽
+- **所有交互元素必须加 `-webkit-app-region: no-drag`**，否则点击会被当成拖窗口
+- 包括但不限于：面板、按钮、输入框、canvas、叠加层
+- 遇到"点了没反应"、"点了拖动整个窗口"优先查这个——这是 #1 嫌疑人
 
 ### 文档维护
 - [README.md](README.md) — 架构总览 + 快速开始 + 模块说明 + 后续优化清单。每个 Phase 完成都要更新
@@ -134,9 +143,13 @@ desktop-mascot/
 - [x] 播放时角色进入 music 表情
 
 ### Phase 5：灵魂 🟢 进行中
-- [x] 天气组件（Open-Meteo 免费 API，右上角）
+- [x] 天气组件（Open-Meteo 免费 API，右上角，每10分钟+点击刷新）
 - [x] 实时时钟（左下角）
 - [x] 预启动页（splash screen — beginui.jpg + 白色区域文字渐显）
+- [x] GPT-SoVITS v2 语音合成（mmkSS 配对模型，CPU 推理）
+- [x] TTS 语音播放时气泡保持显示，播完自动消失
+- [x] 网易云播放器优化：错误自动跳下一首、暂停状态修复、音量记忆
+- [x] 语音音量独立调节 + 音乐音量记忆（设置面板）
 - [ ] 情绪曲线（根据对话频率/内容调整态度）
 - [ ] 更多节日彩蛋
 

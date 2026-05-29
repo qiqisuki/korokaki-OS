@@ -1,14 +1,16 @@
+const { ipcRenderer } = require('electron')
 const fs = require('fs')
 const path = require('path')
+const sound = require('./sound')
 
-function IdleBehavior(model, expressionState, chatUI) {
+function IdleBehavior(model, expressionState, chatUI, mood) {
   this._model = model
   this._expressionState = expressionState
   this._chatUI = chatUI
+  this._mood = mood
   this._idleTimer = null
   this._idleDelay = 25000
   this._lastActivity = Date.now()
-  this._moodLevel = 0
 
   this._scheduleGreeting()
   this._scheduleIdle()
@@ -24,8 +26,21 @@ IdleBehavior.prototype._onIdle = function () {
   var gap = (Date.now() - this._lastActivity) / 1000 / 60 // 分钟
   var self = this
 
-  if (gap > 45 && Math.random() < 0.4) {
-    // 长时间不互动，概率触发"敲门"
+  // 检查傲娇敲门
+  if (this._mood && this._mood.shouldKnock() && Math.random() < 0.5) {
+    var ctx = this._mood.getKnockContext()
+    if (ctx) {
+      sound.knock()
+      ipcRenderer.send('shake-window')
+      this._chatUI.showBubble(ctx.text, ctx.duration)
+      this._expressionState.set(ctx.expr)
+      setTimeout(function () { self._expressionState.set('idle') }, ctx.duration)
+      this._scheduleIdle()
+      return
+    }
+  }
+
+  if (gap > 45 && !this._mood && Math.random() < 0.4) {
     this._doKnocking(gap)
   } else {
     var actions
@@ -38,12 +53,13 @@ IdleBehavior.prototype._onIdle = function () {
     var pick = actions[Math.floor(Math.random() * actions.length)]
 
     if (pick === 'expression') {
-      var exps = ['confused', 'sleep', 'work', 'music', 'angry', 'tongue']
+      var exps = this._mood ? this._mood.suggestIdleExpressions() : ['confused', 'sleep', 'work', 'music', 'angry', 'tongue']
       var exp = exps[Math.floor(Math.random() * exps.length)]
       this._expressionState.set(exp)
       setTimeout(function () { self._expressionState.set('idle') }, 4000 + Math.random() * 3000)
     } else if (pick === 'thought') {
-      this._chatUI.showBubble(this._pickThought(gap), 4000)
+      var thought = this._mood ? this._mood.suggestIdleThought() : null
+      this._chatUI.showBubble(thought || this._pickThought(gap), 4000)
     }
   }
 
@@ -52,6 +68,9 @@ IdleBehavior.prototype._onIdle = function () {
 
 IdleBehavior.prototype._doKnocking = function (gapMinutes) {
   var self = this
+
+  sound.knock()
+  ipcRenderer.send('shake-window')
 
   if (gapMinutes > 180) {
     this._chatUI.showBubble('（轻轻敲了敲屏幕）小夜......还在吗？姐姐好想你 [teary]', 6000)
@@ -105,12 +124,53 @@ IdleBehavior.prototype._pickThought = function (gapMinutes) {
 IdleBehavior.prototype.notifyActivity = function () {
   this._lastActivity = Date.now()
   this._scheduleIdle()
+
+  // 傲娇归来序列
+  if (this._mood) {
+    var self = this
+    var step = this._mood.saveTsundereResponse()
+    if (step) {
+      this._runTsundereReturn(step)
+    }
+  }
+}
+
+IdleBehavior.prototype._runTsundereReturn = function (step) {
+  var self = this
+  if (!step) return
+
+  if (step.text) {
+    this._chatUI.showBubble(step.text, 5000)
+  }
+  this._expressionState.set(step.expr)
+
+  var next = this._mood.stepTsundereReturn()
+  if (next) {
+    setTimeout(function () { self._runTsundereReturn(next) }, step.text ? 5000 : 2000)
+  } else {
+    setTimeout(function () { self._expressionState.set('idle') }, 3000)
+  }
 }
 
 IdleBehavior.prototype._scheduleGreeting = function () {
   var self = this
 
-  // 先检查纪念日
+  // 先检查节日 (mood)
+  if (this._mood) {
+    var holiday = this._mood.getHolidayGreeting()
+    if (holiday) {
+      setTimeout(function () {
+        self._chatUI.showBubble(holiday.text.replace(/\[.*?\]/, '').trim(), holiday.duration || 6000)
+        if (holiday.expr !== 'idle') {
+          self._expressionState.set(holiday.expr)
+          setTimeout(function () { self._expressionState.set('idle') }, 5000)
+        }
+      }, 2500)
+      return
+    }
+  }
+
+  // 兼容旧纪念日文件 (向后兼容)
   var ann = this._checkAnniversary()
   if (ann) {
     setTimeout(function () {

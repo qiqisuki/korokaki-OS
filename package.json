@@ -1,6 +1,6 @@
 {
   "name": "desktop-mascot",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "description": "会长姐姐的数字分身 — Electron透明浮窗 + Claude API + 网易云音乐",
   "main": "src/main/main.js",
   "scripts": {

@@ -120,8 +120,18 @@ ipcMain.handle('get-model-path', () => {
   return join(ROOT, 'assets', 'live2d', 'yumi', 'yumi.model3.json')
 })
 
+var splashVariant = Math.random() < 0.5 ? 0 : 1
+
 ipcMain.handle('get-splash-image', () => {
+  if (splashVariant === 1) {
+    var extraPath = join(os.homedir(), 'Desktop', 'extra.jpg')
+    if (require('fs').existsSync(extraPath)) return extraPath
+  }
   return join(os.homedir(), 'Desktop', 'beginui.jpg')
+})
+
+ipcMain.handle('get-splash-variant', () => {
+  return splashVariant
 })
 
 ipcMain.on('splash-size', (_e, size) => {
@@ -146,6 +156,20 @@ ipcMain.on('set-auto-launch', (_e, enable) => {
 
 ipcMain.on('set-opacity', (_e, value) => {
   if (win) win.setOpacity(value)
+})
+
+ipcMain.on('shake-window', () => {
+  if (!win) return
+  var bounds = win.getBounds()
+  var origX = bounds.x
+  var intensity = 4
+  var steps = [0, 1, -2, 3, -3, 2, -1, 0]
+  var i = 0
+  var timer = setInterval(function () {
+    if (i >= steps.length) { clearInterval(timer); return }
+    win.setPosition(origX + steps[i] * intensity, bounds.y)
+    i++
+  }, 30)
 })
 
 ipcMain.on('splash-done', () => {
@@ -192,12 +216,14 @@ function startTtsServer() {
     }
   } catch (e) {}
 
-  var modelPath = settings.ttsModelPath || join(ROOT, 'assets', 'tts', 'model.pth')
+  var modelPath = settings.ttsModelPath || join(os.homedir(), 'Desktop', 'mmk', 'mmkSS_e140_s2940.pth')
+  var gptPath = settings.ttsGptPath || join(os.homedir(), 'Desktop', 'mmk', 'mmkSS-e30.ckpt')
   var refAudio = settings.ttsRefAudio || join(ROOT, 'assets', 'tts', 'ref.wav')
 
   var args = [
     scriptPath,
     '-s', modelPath,
+    '-g', gptPath,
     '-d', 'cpu',
     '-p', '9880',
     '-a', '127.0.0.1',

@@ -34,7 +34,7 @@ desktop-mascot/
 │   └── under.jpg          # 浮窗背景图
 ├── chat-bridge/           # 对话桥接 README
 ├── music-player/          # 网易云音乐模块（Phase 4）
-├── tts_server/            # GPT-SoVITS TTS 语音服务（Phase 5）
+├── tts_server/            # GPT-SoVITS 补丁文档 (tts_server/PATCHES.md)
 ├── reminder/              # 提醒系统（Phase 3）
 └── wechat-link/           # 微信联动（Phase 5）
 ```
@@ -63,22 +63,18 @@ npm start
 ### TTS 语音合成（可选）
 
 ```bash
-# 1. 安装 Python 依赖
-pip install torch flask numpy soundfile
+# 1. 安装 GPT-SoVITS（需 Python 3.12+）
+git clone https://github.com/RVC-Boss/GPT-SoVITS.git ~/GPT-SoVITS
+cd ~/GPT-SoVITS && pip install torch flask numpy soundfile onnxruntime opencc g2p_en
 
-# 2. 安装 GPT-SoVITS
-git clone https://github.com/RVC-Boss/GPT-SoVITS.git
-cd GPT-SoVITS && pip install -r requirements.txt
+# 2. 准备模型文件（放在桌面 mmk 文件夹）
+#    - mmkSS-e30.ckpt    (GPT 模型，文字→语义令牌)
+#    - mmkSS_e140_s2940.pth  (SoVITS 模型，语义令牌→音频)
 
-# 3. 将模型放入 assets/tts/
-#    - model.pth  (SoVITS 权重)
-#    - ref.wav     (参考音频，声音克隆用)
+# 3. 参考音频 assets/tts/ref.wav
+#    5-10s 清晰语音 + 匹配文本
 
-# 4. 测试 TTS 服务器
-cd tts_server && pip install -r requirements.txt
-python tts_server.py --model_path ../assets/tts/model.pth --port 9880
-
-# 5. 启动应用 → 设置中开启 TTS → AI 回复说话
+# 4. 启动应用 → 设置中开启 TTS → AI 回复说话
 ```
 
 ---
@@ -92,7 +88,7 @@ python tts_server.py --model_path ../assets/tts/model.pth --port 9880
 | 空闲行为 | `src/renderer/behavior.js` | 🟢 Phase 3 完成 | 随机动作 + 自言自语 + 时间问候 |
 | 提醒系统 | `src/renderer/reminders.js` | 🟢 Phase 3 完成 | 喝水提醒 + 休息提醒 + deadline 催稿 |
 | 音乐播放 | `src/music/` | 🟢 Phase 4 完成 | 网易云 API + howler.js + 搜索面板 + 播放 |
-| 语音合成 | `tts_server/` `src/renderer/tts.js` | 🟢 Phase 5 进行中 | GPT-SoVITS + Flask + Howler 播放 |
+| 语音合成 | `src/renderer/tts.js` + GPT-SoVITS api.py | ✅ v1.2 完成 | 配对 v2 模型 (GPT+SoVITS)，CPU 推理 |
 | 微信联动 | `wechat-link/` | 🔜 待开发 | 复用 wechat-mcp 桥接 |
 
 ---

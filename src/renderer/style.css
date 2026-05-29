@@ -22,11 +22,24 @@ body::before {
   z-index: -1;
 }
 
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 40px rgba(180, 200, 255, 0.2),
+    inset 0 0 100px rgba(150, 180, 255, 0.1),
+    0 0 30px rgba(180, 200, 255, 0.15);
+  pointer-events: none;
+  z-index: 99;
+}
+
 #live2d-canvas {
   display: block;
   width: 100%;
   height: 100%;
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
   cursor: pointer;
 }
 
@@ -109,6 +122,24 @@ body::before {
 .chat-bubble.visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.chat-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid rgba(255, 255, 255, 0.92);
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.chat-bubble.visible::after {
+  opacity: 1;
 }
 
 /* 音乐播放时气泡下移 */
@@ -769,6 +800,32 @@ body::before {
   font-size: 16px;
 }
 
+.sp-affection-hearts {
+  font-size: 18px;
+  margin-bottom: 6px;
+  letter-spacing: 2px;
+}
+
+.sp-affection-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.sp-affection-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff9a9e, #f06292, #e91e63);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.sp-affection-text {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+}
+
 /* 设置面板 */
 .settings-trigger {
   position: fixed;
@@ -1075,7 +1132,7 @@ body::before {
 /* 时钟 */
 .clock-widget {
   position: fixed;
-  bottom: 100px;
+  bottom: 140px;
   left: 16px;
   z-index: 14;
   -webkit-app-region: no-drag;
@@ -1405,4 +1462,281 @@ body::before {
     transform: translateY(-280px) translateX(calc(var(--sway, 10px) * -0.6));
     opacity: 0;
   }
+}
+
+/* === 小游戏 === */
+.games-trigger {
+  position: fixed; bottom: 100px; left: 16px;
+  padding: 8px 18px;
+  background: rgba(255,255,255,0.88); border-radius: 22px;
+  font-size: 13px; color: #555; cursor: pointer; z-index: 15;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  -webkit-app-region: no-drag;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.games-trigger:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
+.games-trigger.active { background: rgba(255,255,255,0.95); }
+.games-panel {
+  position: fixed; bottom: 140px; left: 16px; width: 220px;
+  background: rgba(30,30,40,0.94); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; z-index: 20; display: none; padding: 12px;
+  -webkit-app-region: no-drag;
+}
+.games-panel.visible { display: block; }
+.games-panel * { -webkit-app-region: no-drag; }
+.games-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.games-title { color: rgba(255,255,255,0.9); font-size: 13px; font-weight: bold; }
+.games-close { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 14px; }
+.games-menu-btn {
+  width: 100%; padding: 8px; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+  color: rgba(255,255,255,0.9); font-size: 13px; cursor: pointer; text-align: left;
+}
+.games-menu-btn:hover { background: rgba(255,255,255,0.15); }
+.game-title { text-align: center; font-size: 13px; color: rgba(255,255,255,0.8); margin: 8px 0; }
+.rps-score { text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+.rps-choices { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.rps-btn {
+  width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2); font-size: 22px; cursor: pointer;
+  transition: transform 0.15s;
+}
+.rps-btn:hover { transform: scale(1.15); background: rgba(255,255,255,0.18); }
+.rps-result { text-align: center; font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 6px; min-height: 32px; }
+
+.games-back {
+  background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer;
+  font-size: 14px; margin-right: 6px; padding: 0;
+}
+.games-area { margin-top: 4px; }
+.guess-hint { text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin: 6px 0; }
+.guess-input-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.guess-input {
+  flex: 1; padding: 6px 8px; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2); border-radius: 6px;
+  color: #fff; font-size: 13px; outline: none;
+}
+.guess-btn {
+  padding: 6px 14px; background: rgba(100,180,255,0.25);
+  border: 1px solid rgba(100,180,255,0.4); border-radius: 6px;
+  color: #fff; cursor: pointer; font-size: 13px;
+}
+.guess-btn:hover { background: rgba(100,180,255,0.4); }
+.guess-result { text-align: center; font-size: 12px; color: rgba(255,255,255,0.75); min-height: 28px; }
+.guess-history { text-align: center; font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+.fortune-card {
+  text-align: center; padding: 14px 10px; margin: 8px 0;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+}
+.fortune-icon { font-size: 36px; margin-bottom: 4px; }
+.fortune-level { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
+.fortune-msg { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+.fortune-footer { text-align: center; font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 8px; }
+
+/* 节日粒子 */
+.ambience-heart {
+  position: absolute; bottom: -20px; pointer-events: none; z-index: 5;
+  animation: float-up-fade 9s ease-in forwards;
+}
+.ambience-snow {
+  position: absolute; top: -20px; pointer-events: none; z-index: 5;
+  animation: snow-fall 10s ease-in forwards;
+}
+.ambience-sakura {
+  position: absolute; top: -20px; pointer-events: none; z-index: 5;
+  animation: sakura-fall 10s ease-in forwards;
+}
+.ambience-firework {
+  position: absolute; pointer-events: none; z-index: 5;
+  animation: firework-pop 1.5s ease-out forwards;
+}
+@keyframes float-up-fade {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+  100% { transform: translateY(-400px) rotate(30deg); opacity: 0; }
+}
+@keyframes snow-fall {
+  0% { transform: translateY(0) translateX(0); opacity: 0.9; }
+  100% { transform: translateY(500px) translateX(40px); opacity: 0; }
+}
+@keyframes sakura-fall {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.9; }
+  100% { transform: translateY(500px) translateX(-30px) rotate(180deg); opacity: 0; }
+}
+@keyframes firework-pop {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* 待办面板 */
+.todo-trigger {
+  position: fixed; bottom: 56px; left: 150px;
+  padding: 8px 18px;
+  background: rgba(255,255,255,0.88); border-radius: 22px;
+  font-size: 13px; color: #555; cursor: pointer; z-index: 15;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  -webkit-app-region: no-drag;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.todo-trigger:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
+.todo-trigger.active { background: rgba(255,255,255,0.95); }
+.todo-panel {
+  position: fixed; bottom: 96px; left: 150px; width: 260px; max-height: 360px;
+  background: rgba(30,30,40,0.94); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; z-index: 20; display: none; padding: 12px;
+  overflow-y: auto;
+  -webkit-app-region: no-drag;
+}
+.todo-panel.visible { display: block; }
+.todo-panel * { -webkit-app-region: no-drag; }
+.todo-list { margin: 8px 0; }
+.todo-empty { text-align: center; font-size: 12px; color: rgba(255,255,255,0.4); padding: 16px 0; }
+.todo-item {
+  display: flex; align-items: center; gap: 6px; padding: 6px 8px;
+  margin-bottom: 4px; background: rgba(255,255,255,0.05); border-radius: 6px;
+}
+.todo-item.todo-urgent { border-left: 2px solid #ff9800; }
+.todo-item.todo-soon { border-left: 2px solid #ffc107; }
+.todo-item.todo-overdue { border-left: 2px solid #f44336; opacity: 0.7; }
+.todo-check {
+  cursor: pointer; width: 18px; height: 18px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.3); font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.4); flex-shrink: 0;
+}
+.todo-check:hover { background: rgba(100,255,100,0.2); color: #69b578; }
+.todo-task { flex: 1; font-size: 12px; color: rgba(255,255,255,0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.todo-date { font-size: 10px; color: rgba(255,255,255,0.4); flex-shrink: 0; }
+.todo-add-row { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.todo-add-task { flex: 2; min-width: 80px; padding: 5px 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; color: #fff; font-size: 11px; outline: none; }
+.todo-add-date { flex: 1; min-width: 60px; padding: 5px 4px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; color: #fff; font-size: 10px; outline: none; }
+.todo-add-time { width: 50px; padding: 5px 4px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; color: #fff; font-size: 10px; outline: none; }
+.todo-add-btn {
+  padding: 5px 10px; background: rgba(100,180,255,0.25);
+  border: 1px solid rgba(100,180,255,0.4); border-radius: 5px;
+  color: #fff; cursor: pointer; font-size: 14px;
+}
+.todo-add-btn:hover { background: rgba(100,180,255,0.4); }
+
+.todo-edit-task { flex: 2; min-width: 60px; padding: 3px 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; color: #fff; font-size: 11px; outline: none; }
+.todo-edit-date { flex: 1; min-width: 50px; padding: 3px 3px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; color: #fff; font-size: 10px; outline: none; }
+.todo-edit-time { width: 44px; padding: 3px 2px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; color: #fff; font-size: 10px; outline: none; }
+.todo-save-btn { padding: 3px 6px; background: rgba(100,255,100,0.2); border: 1px solid rgba(100,255,100,0.3); border-radius: 4px; color: #69b578; cursor: pointer; font-size: 12px; }
+.todo-save-btn:hover { background: rgba(100,255,100,0.35); }
+
+/* 所有交互面板内部元素统一禁用拖拽 */
+.status-panel * { -webkit-app-region: no-drag; }
+.settings-panel * { -webkit-app-region: no-drag; }
+.music-panel * { -webkit-app-region: no-drag; }
+.player-card * { -webkit-app-region: no-drag; }
+.chat-input-overlay * { -webkit-app-region: no-drag; }
+
+/* 日记面板 */
+.diary-trigger {
+  position: fixed; top: 50px; left: 12px;
+  padding: 8px 18px;
+  background: rgba(255,255,255,0.88); border-radius: 22px;
+  font-size: 13px; color: #555; cursor: pointer; z-index: 15;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  -webkit-app-region: no-drag;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.diary-trigger:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
+.diary-trigger.active { background: rgba(255,255,255,0.95); }
+.diary-panel {
+  position: fixed; top: 90px; left: 12px; width: 260px; max-height: 380px;
+  background: rgba(30,30,40,0.94); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; z-index: 20; display: none; padding: 12px;
+  overflow-y: auto;
+  -webkit-app-region: no-drag;
+}
+.diary-panel.visible { display: block; }
+.diary-panel * { -webkit-app-region: no-drag; }
+.diary-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+.diary-tab {
+  flex: 1; padding: 5px 8px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+  color: rgba(255,255,255,0.5); font-size: 11px; cursor: pointer; text-align: center;
+}
+.diary-tab.active { background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3); }
+.diary-card {
+  padding: 10px; margin-bottom: 8px;
+  background: rgba(255,255,255,0.05); border-radius: 8px;
+}
+.diary-date { font-size: 13px; color: rgba(255,255,255,0.8); font-weight: bold; margin-bottom: 6px; }
+.diary-stat { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.8; }
+.diary-stat b { color: rgba(255,255,255,0.85); }
+.diary-tag { display: inline-block; padding: 1px 6px; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; margin-left: 3px; }
+.diary-compare { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 6px; }
+.diary-week-list { margin-top: 6px; }
+.diary-week-item { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 2; }
+.diary-highlight { font-size: 12px; color: #ffcc80; margin-top: 8px; text-align: center; }
+
+/* === 毛玻璃统一 === */
+.status-panel, .settings-panel, .music-panel, .games-panel, .todo-panel, .diary-panel {
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  background: rgba(25, 25, 35, 0.72) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+.player-card {
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  background: rgba(20, 20, 30, 0.65) !important;
+}
+.chat-bubble {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.78) !important;
+}
+.chat-bubble::after {
+  border-top-color: rgba(255, 255, 255, 0.78);
+}
+.chat-input-overlay {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* === 按钮微动效 === */
+.chat-trigger, .music-trigger, .settings-trigger, .todo-trigger, .games-trigger, .diary-trigger, .pomodoro-trigger {
+  overflow: hidden;
+}
+.chat-trigger::after, .music-trigger::after, .settings-trigger::after,
+.todo-trigger::after, .games-trigger::after, .diary-trigger::after, .pomodoro-trigger::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s ease;
+}
+.chat-trigger:hover::after, .music-trigger:hover::after, .settings-trigger:hover::after,
+.todo-trigger:hover::after, .games-trigger:hover::after, .diary-trigger:hover::after, .pomodoro-trigger:hover::after {
+  left: 100%;
+}
+.chat-trigger:active, .music-trigger:active, .settings-trigger:active,
+.todo-trigger:active, .games-trigger:active, .diary-trigger:active, .pomodoro-trigger:active {
+  transform: scale(0.92) !important;
+}
+
+/* 圆形按钮微动效 */
+.status-trigger {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.status-trigger:hover {
+  box-shadow: 0 0 12px rgba(105, 181, 120, 0.4);
+}
+.status-trigger:active {
+  transform: scale(0.85);
+}
+
+/* 面板关闭按钮 */
+.games-close {
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.games-close:hover {
+  color: #f44336 !important;
+  transform: rotate(90deg);
 }

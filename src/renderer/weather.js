@@ -46,6 +46,9 @@ WeatherWidget.prototype._init = function () {
   this._icon = el.querySelector('.weather-icon')
   this._temp = el.querySelector('.weather-temp')
   this._greeting = el.querySelector('.weather-greeting')
+
+  var self = this
+  el.addEventListener('click', function () { self._refresh() })
 }
 
 WeatherWidget.prototype._fetch = function () {
@@ -74,8 +77,13 @@ WeatherWidget.prototype._fetch = function () {
   req.on('error', function () {})
   req.end()
 
-  // 每 30 分钟刷新
-  setTimeout(function () { self._fetch() }, 30 * 60 * 1000)
+  // 每 10 分钟刷新
+  setTimeout(function () { self._fetch() }, 10 * 60 * 1000)
+}
+
+WeatherWidget.prototype._refresh = function () {
+  this._icon.textContent = '⏳'
+  this._fetch()
 }
 
 WeatherWidget.prototype._update = function (temp, w) {

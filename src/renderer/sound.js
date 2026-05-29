@@ -80,11 +80,46 @@ module.exports = {
     }
   },
 
+  // 启动画面 — 暗系哥特 (精简)
+  splashDark: function () {
+    var t = 0
+    tone(87, 3.5, 'sine', 0.10, t)
+    tone(87, 3.5, 'triangle', 0.06, t + 0.05)
+
+    var melody = [
+      { f: 523, d: 0.35, v: 0.16 },
+      { f: 494, d: 0.25, v: 0.14 },
+      { f: 440, d: 0.40, v: 0.15 },
+      { f: 370, d: 0.45, v: 0.16 },
+      { f: 440, d: 0.25, v: 0.13 },
+      { f: 494, d: 0.35, v: 0.15 },
+      { f: 523, d: 0.55, v: 0.18 },
+      { f: 440, d: 0.30, v: 0.14 },
+      { f: 349, d: 0.50, v: 0.16 },
+      { f: 523, d: 0.80, v: 0.18 },
+    ]
+    for (var i = 0; i < melody.length; i++) {
+      var n = melody[i]
+      tone(n.f, n.d, 'sine', n.v, t)
+      tone(n.f / 2, n.d, 'triangle', n.v * 0.5, t + 0.03)
+      tone(n.f * 1.5, n.d * 0.2, 'sine', n.v * 0.18, t + 0.05)
+      t += n.d * 0.6
+    }
+  },
+
   // 音乐播放 — 轻快音符
   music: function () {
     tone(440, 0.10, 'triangle', 0.08, 0)
     tone(554, 0.10, 'triangle', 0.08, 0.08)
     tone(660, 0.12, 'triangle', 0.08, 0.16)
     tone(880, 0.15, 'triangle', 0.06, 0.24)
+  },
+
+  // 敲门 — 低沉短促×3
+  knock: function () {
+    for (var i = 0; i < 3; i++) {
+      tone(180, 0.08, 'square', 0.12, i * 0.25)
+      tone(150, 0.10, 'square', 0.10, i * 0.25 + 0.02)
+    }
   },
 }

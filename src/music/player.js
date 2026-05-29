@@ -7,6 +7,7 @@ function Player() {
   this._index = -1
   this._isPlaying = false
   this._onStateChange = null
+  this._errorCount = 0
 }
 
 Player.prototype.addToPlaylist = function (song) {
@@ -44,15 +45,17 @@ Player.prototype.playIndex = async function (index, getUrl) {
     this.stop()
     this._index = index
     this._current = song
+    var self = this
     this._howl = new Howl({
       src: [url],
       html5: true,
       format: ['mp3'],
-      onend: () => this.next(getUrl),
-      onloaderror: () => { this._isPlaying = false; this._emit() },
+      onend: function () { self.next(getUrl) },
+      onloaderror: function () { self._skipError(getUrl) },
     })
     this._howl.play()
     this._isPlaying = true
+    this._errorCount = 0
     this._emit()
     return true
   } catch (e) {
@@ -60,10 +63,31 @@ Player.prototype.playIndex = async function (index, getUrl) {
   }
 }
 
+Player.prototype._skipError = async function (getUrl) {
+  this._isPlaying = false
+  this._emit()
+  this._errorCount++
+  // 最多尝试整张列表的长度次，避免无限循环
+  if (this._errorCount > this._playlist.length) {
+    this._current = null
+    this._errorCount = 0
+    this._emit()
+    return
+  }
+  await this.next(getUrl)
+}
+
 Player.prototype.next = async function (getUrl) {
   if (this._playlist.length === 0) return
-  var nextIdx = (this._index + 1) % this._playlist.length
-  await this.playIndex(nextIdx, getUrl)
+  // 列表末尾则循环到开头
+  var nextIdx = this._index + 1
+  if (nextIdx >= this._playlist.length) nextIdx = 0
+  var ok = await this.playIndex(nextIdx, getUrl)
+  // 当前这首加载失败则继续尝试下一首
+  if (!ok && nextIdx < this._playlist.length - 1) {
+    this._index = nextIdx
+    await this.next(getUrl)
+  }
 }
 
 Player.prototype.prev = async function (getUrl) {

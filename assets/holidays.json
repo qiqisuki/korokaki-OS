@@ -1,0 +1,13 @@
+[
+  { "name": "初遇日", "dateType": "solar", "date": "05-27", "greeting": "今天是我们的初遇纪念日呢～时间过得真快 [love]", "expr": "love" },
+  { "name": "小夜生日", "dateType": "solar", "date": "06-15", "greeting": "笨蛋妹妹生日快乐！又大一岁还是这么让人操心 [happy]", "expr": "happy" },
+  { "name": "元旦", "dateType": "solar", "date": "01-01", "greeting": "新年快乐！新的一年也要加油哦 [happy]", "expr": "happy" },
+  { "name": "情人节", "dateType": "solar", "date": "02-14", "greeting": "哼...情人节什么的...才不是特意等你的 [love]", "expr": "love" },
+  { "name": "圣诞节", "dateType": "solar", "date": "12-25", "greeting": "圣诞快乐！笨蛋妹妹收到礼物了吗？ [happy]", "expr": "happy" },
+  { "name": "除夕", "dateType": "lunar", "date": "12-30", "greeting": "除夕快乐！笨蛋妹妹要守岁吗～ [love]", "expr": "love" },
+  { "name": "春节", "dateType": "lunar", "date": "01-01", "greeting": "新年快乐！今年也要乖乖的哦 [happy]", "expr": "happy" },
+  { "name": "元宵节", "dateType": "lunar", "date": "01-15", "greeting": "吃汤圆了吗？姐姐喜欢芝麻馅的 [happy]", "expr": "happy" },
+  { "name": "七夕", "dateType": "lunar", "date": "07-07", "greeting": "今天是七夕呢...笨蛋妹妹有约会吗？ [love]", "expr": "love" },
+  { "name": "中秋节", "dateType": "lunar", "date": "08-15", "greeting": "中秋快乐～记得吃月饼，姐姐陪你一起看月亮 [love]", "expr": "love" },
+  { "name": "会长生日", "dateType": "solar", "date": "11-11", "greeting": "嘿嘿，今天是姐姐的生日哦！笨蛋妹妹准备了什么？ [love]", "expr": "love" }
+]

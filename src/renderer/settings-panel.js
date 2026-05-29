@@ -101,11 +101,19 @@ SettingsPanel.prototype._render = function () {
           '<span>启用语音（AI 回复时说话）</span>' +
         '</label>' +
         '<div class="st-row" style="margin-top:10px">' +
-          '<label>语速 <input type="range" class="st-opacity-slider" id="stTtsSpeed" min="50" max="200" value="' + ((s.ttsSpeed || 1) * 100) + '"></label>' +
-          '<span class="st-opacity-value">' + Math.round((s.ttsSpeed || 1) * 100) + '%</span>' +
+          '<label>音量 <input type="range" class="st-opacity-slider" id="stTtsVolume" min="0" max="100" value="' + ((s.ttsVolume != null ? s.ttsVolume : 0.8) * 100) + '"></label>' +
+          '<span class="st-opacity-value">' + Math.round((s.ttsVolume != null ? s.ttsVolume : 0.8) * 100) + '%</span>' +
         '</div>' +
         '<input type="text" class="st-input" id="stTtsModelPath" value="' + (s.ttsModelPath || '') + '" placeholder="模型路径 (默认: assets/tts/model.pth)" style="margin-top:8px">' +
         '<div class="st-hint">GPT-SoVITS 模型，需先 pip install torch flask + GPT-SoVITS</div>' +
+      '</div>' +
+      // 音乐音量
+      '<div class="st-section">' +
+        '<div class="st-section-title">🎵 音乐默认音量</div>' +
+        '<div class="st-opacity-row">' +
+          '<input type="range" class="st-opacity-slider" id="stMusicVolume" min="0" max="100" value="' + ((s.musicVolume != null ? s.musicVolume : 0.7) * 100) + '">' +
+          '<span class="st-opacity-value">' + Math.round((s.musicVolume != null ? s.musicVolume : 0.7) * 100) + '%</span>' +
+        '</div>' +
       '</div>' +
       // 保存
       '<div class="st-section">' +
@@ -121,6 +129,22 @@ SettingsPanel.prototype._render = function () {
     var val = parseInt(this.value) / 100
     opacityValue.textContent = Math.round(val * 100) + '%'
     ipcRenderer.send('set-opacity', val)
+  })
+
+  // TTS 音量滑块实时预览
+  var ttsVolSlider = this._panel.querySelector('#stTtsVolume')
+  ttsVolSlider.addEventListener('input', function () {
+    var pct = this.value
+    this.parentElement.nextElementSibling.textContent = pct + '%'
+    self._ttsVolumePreview = parseInt(pct) / 100
+  })
+
+  // 音乐音量滑块实时预览
+  var musicVolSlider = this._panel.querySelector('#stMusicVolume')
+  musicVolSlider.addEventListener('input', function () {
+    var pct = this.value
+    this.nextElementSibling.textContent = pct + '%'
+    self._musicVolumePreview = parseInt(pct) / 100
   })
 
   this._panel.querySelector('.st-close').addEventListener('click', function () {
@@ -158,9 +182,11 @@ SettingsPanel.prototype._save = function () {
   store.set('opacity', opacity)
 
   store.set('ttsEnabled', this._panel.querySelector('#stTtsEnabled').checked)
-  store.set('ttsSpeed', parseInt(this._panel.querySelector('#stTtsSpeed').value) / 100)
+  store.set('ttsVolume', parseInt(this._panel.querySelector('#stTtsVolume').value) / 100)
   var ttsModelPath = this._panel.querySelector('#stTtsModelPath').value.trim()
   if (ttsModelPath) store.set('ttsModelPath', ttsModelPath)
+
+  store.set('musicVolume', parseInt(this._panel.querySelector('#stMusicVolume').value) / 100)
 
   this._hide()
   // 提示需要重启生效
